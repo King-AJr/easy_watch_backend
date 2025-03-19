@@ -1,9 +1,11 @@
+from typing import Any
+
 from youtube_transcript_api import YouTubeTranscriptApi
 from serpapi import GoogleSearch
 import os
 import re
 
-def youtube_search(query: str) -> dict:
+def youtube_search(query: str) -> list[dict[str, Any]]:
     """
     Search YouTube for videos based on a query and returns a dictionary
     with 10 video title and video url so the user can select which to transcribe

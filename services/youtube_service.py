@@ -19,16 +19,15 @@ class YoutubeService:
 
     def get_youtube_summary(self, query: str):
 
-        today = date.today()
-        today = today.strftime("%B %d, %Y")
+        date_now = date.today()
+        today = date_now.strftime("%B %d, %Y")
         messages = [
             {
                 "role": "system",
-                "content": """You are a helpful assistant that can search for youtube videos, get the transcript of the video,
-                and using that give a summary of the video telling the user all that the video is about.
-                You can also response to normal questions.
-
-                The user can also ask a question and you can use the transcript to answer the question.
+                "content": f"""You are an intelligent assistant. you can search youtube, get video transcripts,
+                and use the result to provide a summary of the video for the user.
+                You also respond to normal questions.
+                You can use the transcripts to answer user questions.
                 Today's date is {today}
                 """
             },

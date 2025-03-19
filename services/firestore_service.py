@@ -36,7 +36,7 @@ class FirestoreService:
 
     async def store_conversation(self, user_id: str, message: str, response: str) -> None:
         """
-        Store a conversation in Firestore and update the sessions collection.
+        Store a conversation in Firestore and update the session's collection.
 
         This method stores the conversation using langchain_google_firestore,
         then records (or updates) the session information in the "sessions" collection

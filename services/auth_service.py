@@ -3,7 +3,7 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict
 import requests
-from app.core.config import get_settings
+from core.config import get_settings
 
 settings = get_settings()
 security = HTTPBearer()
