@@ -5,7 +5,7 @@ import re
 
 def youtube_search(query: str) -> dict:
     """
-    Search youtube for videos based on a query and returns a dictionary 
+    Search YouTube for videos based on a query and returns a dictionary
     with 10 video title and video url so the user can select which to transcribe
     """
     params = {
@@ -22,7 +22,7 @@ def youtube_search(query: str) -> dict:
 
 def get_transcript_from_url(youtube_url: str) -> str:
     """
-    Fetch transcript for a youtube video using the youtube url and returns the transcript as a string
+    Fetch transcript for a YouTube video using the YouTube url and returns the transcript as a string
     """
     match = re.search(r"(?:v=|youtu\.be/)([\w-]+)", youtube_url)
     if match:
