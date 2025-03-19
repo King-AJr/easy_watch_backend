@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPBearer
-from app.routes.auth import validate_token
+from routes.auth import validate_token
 from models.chat import ChatRequest
 from services.youtube_service import YoutubeService
 router = APIRouter()
