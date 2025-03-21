@@ -12,7 +12,7 @@ COLLECTION_NAME = "chat_history"
 client = firestore.Client(project=PROJECT_ID)
 
 class FirestoreService:
-    def __init__(self, session_id: str, tag: str):
+    def __init__(self, session_id: str, tag: str = "general"):
         """
         Initialize the FirestoreService with a session ID and tag.
         
@@ -24,7 +24,7 @@ class FirestoreService:
         self.session_id = session_id
         self.tag = tag
 
-    def _get_chat_history(self) -> FirestoreChatMessageHistory:
+    def get_chat_history(self) -> FirestoreChatMessageHistory:
         """
         Retrieve the chat history using the session ID.
         """
@@ -34,7 +34,7 @@ class FirestoreService:
             collection=self.collection_name
         )
 
-    async def store_conversation(self, user_id: str, message: str, response: str) -> None:
+    async def store_conversation(self, user_id: str, message: str, response: str="") -> None:
         """
         Store a conversation in Firestore and update the sessions collection.
 
@@ -42,7 +42,7 @@ class FirestoreService:
         then records (or updates) the session information in the "sessions" collection
         using the session_id as the document id, and storing the user_id and tag.
         """
-        chat_history = self._get_chat_history()
+        chat_history = self.get_chat_history()
         
 
         chat_history.add_user_message(message)
@@ -63,7 +63,7 @@ class FirestoreService:
         Note: This method assumes that messages are stored in pairs (user and AI)
         and retrieves the last `limit` messages from the history.
         """
-        chat_history = self._get_chat_history()
+        chat_history = self.get_chat_history()
         
         # Get the last N messages from chat history
         messages = chat_history.messages[-limit:]
@@ -75,7 +75,7 @@ class FirestoreService:
                 conversations.append({
                     'message': messages[i].content,
                     'response': messages[i + 1].content,
-                    'timestamp': datetime.now()  # Replace with stored timestamp if available
+                    'timestamp': datetime.now()
                 })
         
         return conversations

@@ -3,7 +3,7 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict
 import requests
-from app.core.config import get_settings
+from core.config import get_settings
 
 settings = get_settings()
 security = HTTPBearer()
@@ -41,7 +41,6 @@ class AuthService:
                 )
 
             auth_data = response.json()
-            print(f"Auth data: {auth_data}")
             
             # Get user profile information
             user = auth.get_user(auth_data["localId"])
@@ -67,6 +66,7 @@ class AuthService:
 
     @staticmethod
     async def create_user(email: str, password: str, display_name: Optional[str] = None) -> Dict:
+
         try:
             user = auth.create_user(
                 email=email,
@@ -80,6 +80,7 @@ class AuthService:
                 "display_name": user.display_name
             }
         except auth.EmailAlreadyExistsError:
+            print('email already exist')
             raise HTTPException(
                 status_code=400,
                 detail="Email already registered"
