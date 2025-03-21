@@ -87,5 +87,3 @@ async def get_user_collections(token: str = Depends(security)):
     firestore_service = FirestoreService()
     collections = await firestore_service.get_collections_for_user(user_id=user_id)
     return collections
-
-app.include_router(router)
