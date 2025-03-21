@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     PROJECT_ID: str
     YOUTUBE_API_KEY: str
     UVICORN_PORT: str
+    YOUTUBE_TRANSCRIPT_IO_API_TOKEN: str
 
     class Config:
         env_file = ".env"

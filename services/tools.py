@@ -1,3 +1,4 @@
+import requests
 from youtube_transcript_api import YouTubeTranscriptApi
 import youtube_transcript_api
 from youtube_transcript_api.proxies import WebshareProxyConfig
@@ -67,17 +68,34 @@ def youtube_search(query: str) -> list[dict]:
         raise Exception(f"Error searching YouTube video: {str(e)}")
 
 
-def get_transcript_from_url(youtube_url: str) -> str:
+def get_transcript_from_url(youtube_url: str) -> any:
     """
     Fetch transcript for a youtube video using the youtube url and returns the transcript as a string
     """
     match = re.search(r"(?:v=|youtu\.be/)([\w-]+)", youtube_url)
+
+    api_key= os.getenv("YOUTUBE_TRANSCRIPT_IO_API_TOKEN")
     try:
         if match:
             video_id = match.group(1)
-            transcript_list = ytt_api.get_transcript(video_id)
-            transcript = " ".join([entry["text"] for entry in transcript_list])
+            
+            headers = {
+            "Authorization": f"Basic {api_key}",
+            "Content-Type": "application/json"
+            }
+            
+            payload = {"ids": [video_id]}
+            
+            response = requests.post("https://www.youtube-transcript.io/api/transcripts", headers=headers, json=payload)
+
+            data = response.json()
+
+            transcript_segments = data[0]["tracks"][0]['transcript']
+
+            transcript = " ".join(segment["text"] for segment in transcript_segments)
+            
             return transcript
+
         else:
             raise ValueError("Invalid YouTube URL")
     except youtube_transcript_api._errors.TranscriptsDisabled:
