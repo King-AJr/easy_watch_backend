@@ -20,8 +20,8 @@ async def analyze_finances(
         user_id = token.credentials
     else:
         print('validating')
-        user = await validate_token(token.credentials)
-        user_id = user.id
+        user = await validate_token(token)
+        user_id = user["uid"]
 
     print(query.session_id)
     youtube_service = YoutubeService(session_id=query.session_id, user_id=user_id, tag=query.tag)
@@ -34,8 +34,8 @@ async def get_sessions(
     token: str = Depends(security)
 ):           
 
-    user = await validate_token(token.credentials)
-    user_id = user.id
+    user = await validate_token(token)
+    user_id = user["uid"]
     firestore_service = FirestoreService()
 
     result = await firestore_service.get_all_sessions_for_user(user_id=user_id)
@@ -46,8 +46,8 @@ async def get_sessions(
 @router.get("/api/sessions/{session_id}/messages")
 async def get_session_messages(session_id: str, token: str = Depends(security)):
 
-    user = await validate_token(token.credentials)
-    user_id = user.id
+    user = await validate_token(token)
+    user_id = user["uid"]
 
     firestore_service = FirestoreService(session_id=session_id)
 
@@ -67,7 +67,7 @@ async def create_collection(
     user = await validate_token(token)
     if not user:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    user_id = user.id
+    user_id = user["uid"]
 
     # Initialize FirestoreService (session_id and tag are not used in this method)
     firestore_service = FirestoreService()
@@ -84,7 +84,7 @@ async def get_user_collections(token: str = Depends(security)):
     user = await validate_token(token)
     if not user:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    user_id = user.id
+    user_id = user["uid"]
 
     firestore_service = FirestoreService()
     collections = await firestore_service.get_collections_for_user(user_id=user_id)
