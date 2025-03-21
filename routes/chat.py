@@ -33,6 +33,7 @@ async def analyze_finances(
 async def get_sessions(
     token: str = Depends(security)
 ):           
+
     user = await validate_token(token.credentials)
     user_id = user.id
     firestore_service = FirestoreService()
@@ -57,12 +58,13 @@ async def get_session_messages(session_id: str, token: str = Depends(security)):
     
     return messages
 
-
+@router.post("/collections", status_code=HTTP_200_OK)
 async def create_collection(
     collection_req: CollectionCreateRequest,
     token: str = Depends(security)
 ):
-    user = await validate_token(token.credentials)
+
+    user = await validate_token(token)
     if not user:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
     user_id = user.id
@@ -77,9 +79,9 @@ async def create_collection(
 
     return new_collection
 
-@router.get("/api/collections", status_code=HTTP_200_OK)
+@router.get("/collections", status_code=HTTP_200_OK)
 async def get_user_collections(token: str = Depends(security)):
-    user = await validate_token(token.credentials)
+    user = await validate_token(token)
     if not user:
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
     user_id = user.id
