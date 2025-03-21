@@ -12,7 +12,7 @@ COLLECTION_NAME = "chat_history"
 client = firestore.Client(project=PROJECT_ID)
 
 class FirestoreService:
-    def __init__(self, session_id: str, tag: str = "general"):
+    def __init__(self, session_id: str = "general", tag: str = "general"):
         """
         Initialize the FirestoreService with a session ID and tag.
         
@@ -120,9 +120,16 @@ class FirestoreService:
         
         for i in range(0, len(chat_history.messages), 2):
             if i + 1 < len(chat_history.messages):
+                #
                 messages_list.append({
-                    'message': chat_history.messages[i].content,
-                    'response': chat_history.messages[i + 1].content,
+                    "role": "user",
+                    "content": chat_history.messages[i].content,
+                    'timestamp': chat_history.messages[i].timestamp if chat_history.messages[i].timestamp else datetime.now()
+                })
+
+                messages_list.append({
+                    "role": "system",
+                    "content": chat_history.messages[i + 1].content,
                     'timestamp': chat_history.messages[i].timestamp if chat_history.messages[i].timestamp else datetime.now()
                 })
 

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     MODEL_NAME: str = "llama-3.3-70b-versatile"
     PROJECT_ID: str
     YOUTUBE_API_KEY: str
+    UVICORN_PORT: str
 
     class Config:
         env_file = ".env"
