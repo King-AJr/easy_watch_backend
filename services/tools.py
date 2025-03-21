@@ -1,9 +1,20 @@
 from youtube_transcript_api import YouTubeTranscriptApi
 import youtube_transcript_api
+from youtube_transcript_api.proxies import WebshareProxyConfig
 import os
 import re
 from googleapiclient.discovery import build
 import tiktoken
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ytt_api = YouTubeTranscriptApi(
+    proxy_config=WebshareProxyConfig(
+        proxy_username=os.environ.get('PROXY_USERNAME'),
+        proxy_password=os.environ.get('PROXY_PASSWORD'),
+    )
+)
 
 def youtube_search(query: str) -> list[dict]:
     """
@@ -64,7 +75,7 @@ def get_transcript_from_url(youtube_url: str) -> str:
     try:
         if match:
             video_id = match.group(1)
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+            transcript_list = ytt_api.get_transcript(video_id)
             transcript = " ".join([entry["text"] for entry in transcript_list])
             return transcript
         else:
