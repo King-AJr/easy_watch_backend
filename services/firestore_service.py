@@ -120,17 +120,17 @@ class FirestoreService:
         
         for i in range(0, len(chat_history.messages), 2):
             if i + 1 < len(chat_history.messages):
-                #
                 messages_list.append({
+                    "id": chat_history.messages[i].id,
                     "role": "user",
                     "content": chat_history.messages[i].content,
-                    'timestamp': chat_history.messages[i].timestamp if chat_history.messages[i].timestamp else datetime.now()
+                    'timestamp': datetime.now()
                 })
 
                 messages_list.append({
                     "role": "system",
                     "content": chat_history.messages[i + 1].content,
-                    'timestamp': chat_history.messages[i].timestamp if chat_history.messages[i].timestamp else datetime.now()
+                    'timestamp': datetime.now()
                 })
 
         return messages_list
@@ -149,7 +149,7 @@ class FirestoreService:
         sessions = []
         for doc in docs:
             data = doc.to_dict()
-            data["session_id"] = doc.id
+            data["id"] = doc.id
             sessions.append(data)
         return sessions
 
@@ -183,5 +183,4 @@ class FirestoreService:
             data["id"] = doc.id
             collections.append(data)
         return collections
-    
     

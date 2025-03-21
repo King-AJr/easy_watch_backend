@@ -43,7 +43,7 @@ async def get_sessions(
     return result
 
 
-@router.get("/api/sessions/{session_id}/messages")
+@router.get("/sessions/{session_id}/messages")
 async def get_session_messages(session_id: str, token: str = Depends(security)):
 
     user = await validate_token(token)
