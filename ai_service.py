@@ -1,9 +1,12 @@
 import os
 import json
+import subprocess
+import yt_dlp
 from groq import Groq
 from typing import Optional, Dict
 from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
+from youtube_transcript_api.proxies import WebshareProxyConfig
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,6 +14,13 @@ load_dotenv()
 client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
 
 YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY')
+
+ytt_api = YouTubeTranscriptApi(
+    proxy_config=WebshareProxyConfig(
+        proxy_username=os.environ.get('PROXY_USERNAME'),
+        proxy_password=os.environ.get('PROXY_PASSWORD'),
+    )
+)
 
 def search_video(query: str) -> Optional[Dict]:
     """
@@ -32,11 +42,9 @@ def search_video(query: str) -> Optional[Dict]:
 
         results = []
         
-        # Process all videos in the response
         for video in response['items']:
             video_id = video['id']['videoId']
             
-            # Get additional video details
             video_request = youtube.videos().list(
                 part="snippet,statistics",
                 id=video_id
@@ -59,43 +67,66 @@ def search_video(query: str) -> Optional[Dict]:
         return results
     except Exception as e:
         raise Exception(f"Error searching YouTube video: {str(e)}")
+    
+
+def download_audio_to_memory(video_id):
+    youtube_url = f"https://www.youtube.com/watch?v={video_id}"
+    cmd = ['yt-dlp', '-f', 'bestaudio/best', '-o', '-', youtube_url]
+    audio_bytes = subprocess.check_output(cmd)
+    return audio_bytes
+
+def transcribe_audio_groq_memory(video_id, prompt="""
+        You are a skilled video content analyzer. Create a comprehensive summary of the video
+        based on its transcript. Include:
+        1. Main topics and key points
+        2. Important details and insights
+        3. Key takeaways
+        Format the summary in a clear, easy-to-read structure.
+        """,
+        language="en",
+        model="whisper-large-v3-turbo", temperature=0.0):
+
+    audio_bytes = download_audio_to_memory(video_id)
+    
+    transcription = client.audio.transcriptions.create(
+        file=("audio.mp3", audio_bytes),
+        model=model,
+        prompt=prompt,
+        language=language,
+        response_format="json",
+        temperature=temperature
+    )
+    return transcription.text
 
 def get_video_transcript(video_id: str):
     """
     Get the transcript of a YouTube video
     """
     try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        transcript_list = ytt_api.get_transcript(video_id)
         transcript_text = ' '.join([entry['text'] for entry in transcript_list])
         return transcript_text
 
     except NoTranscriptFound:
-        raise Exception("Transcripts are not available for this video")
+        transcription_text = transcribe_audio_groq_memory(video_id, language="en")
+        return transcription_text
     except Exception as e:
         raise Exception(f"Error getting video transcript: {str(e)}")
     
-    def select_video(results: list[Dict], selection_index: int = None) -> Optional[Dict]:
+
+def select_video(results: list[Dict], selection_index: int = None) -> Optional[Dict]:
         """
         Allow the user to select a video from the search results
-        
-        Args:
-            results: List of video results from search_video
-            selection_index: Optional index to directly select a video (0-based)
-            
-        Returns:
-            Selected video dictionary or None if no selection is made
         """
         if not results:
             return None
         
         if selection_index is not None:
-            # If a selection index is provided, return that video
             if 0 <= selection_index < len(results):
                 return results[selection_index]
             else:
                 raise ValueError(f"Selection index {selection_index} is out of range (0-{len(results)-1})")
         
-        # If no selection index is provided, display videos and prompt for selection
         print("Found the following videos:")
         for i, video in enumerate(results):
             print(f"{i+1}. {video['title']} by {video['channel']} ({video['views']} views)")
