@@ -152,3 +152,36 @@ class FirestoreService:
             data["session_id"] = doc.id
             sessions.append(data)
         return sessions
+
+
+    async def create_collection_record(self, user_id: str, name: str, color: str) -> Dict:
+        """
+        Create a new collection record in the "collections" collection tied to the given user_id.
+        """
+        record_data = {
+            "name": name,
+            "color": color,
+            "user_id": user_id,
+            "created_at": datetime.utcnow()
+        }
+        # Create a new document with an auto-generated ID in the "collections" collection
+        doc_ref = client.collection("collections").document()
+        doc_ref.set(record_data)
+        return {"id": doc_ref.id, **record_data}
+    
+
+    async def get_collections_for_user(self, user_id: str) -> List[Dict]:
+        """
+        Retrieve all collection records from the "collections" collection for a given user_id.
+        """
+        collections_ref = client.collection("collections")
+        query = collections_ref.where("user_id", "==", user_id)
+        docs = query.stream()
+        collections = []
+        for doc in docs:
+            data = doc.to_dict()
+            data["id"] = doc.id
+            collections.append(data)
+        return collections
+    
+    

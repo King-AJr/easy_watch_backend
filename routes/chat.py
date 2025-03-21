@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer
 from routes.auth import validate_token
-from models.chat import ChatRequest
+from models.chat import ChatRequest, CollectionCreateRequest
 from services.firestore_service import FirestoreService
 from services.youtube_service import YoutubeService
-from starlette.status import HTTP_404_NOT_FOUND
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED, HTTP_200_OK
 
 
 
@@ -56,3 +56,36 @@ async def get_session_messages(session_id: str, token: str = Depends(security)):
         raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Session not found or access denied")
     
     return messages
+
+
+async def create_collection(
+    collection_req: CollectionCreateRequest,
+    token: str = Depends(security)
+):
+    user = await validate_token(token.credentials)
+    if not user:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    user_id = user.id
+
+    # Initialize FirestoreService (session_id and tag are not used in this method)
+    firestore_service = FirestoreService()
+    new_collection = await firestore_service.create_collection_record(
+        user_id=user_id,
+        name=collection_req.name,
+        color=collection_req.color
+    )
+
+    return new_collection
+
+@router.get("/api/collections", status_code=HTTP_200_OK)
+async def get_user_collections(token: str = Depends(security)):
+    user = await validate_token(token.credentials)
+    if not user:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    user_id = user.id
+
+    firestore_service = FirestoreService()
+    collections = await firestore_service.get_collections_for_user(user_id=user_id)
+    return collections
+
+app.include_router(router)
