@@ -2,15 +2,15 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 import os
 
-MODEL_NAME = os.getenv("MODEL_NAME")
-
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Scheduler Assistant"
+    PROJECT_NAME: str = "EasyWatch"
     FIREBASE_CREDENTIALS: str
     FIREBASE_WEB_API_KEY: str
     GROQ_API_KEY: str
-    MODEL_NAME: str = MODEL_NAME
-
+    MODEL_NAME: str = "llama-3.3-70b-versatile"
+    PROJECT_ID: str
+    YOUTUBE_API_KEY: str
+    UVICORN_PORT: str
 
     class Config:
         env_file = ".env"

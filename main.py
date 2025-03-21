@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import get_settings
+from core.config import get_settings
 import firebase_admin
-from models import auth, chat
+from routes import auth, chat
 
 firebase_admin.initialize_app()
 
@@ -25,3 +25,8 @@ app.include_router(chat.router, prefix="/api", tags=["chat"])
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Youtube Assistant API"} 
+
+@app.post("/clear-cache")
+async def clear_cache():
+    get_settings.cache_clear()
+    return {"message": "Cache cleared"}
