@@ -19,11 +19,9 @@ async def analyze_finances(
     if token.credentials.startswith("guest"):
         user_id = token.credentials
     else:
-        print('validating')
         user = await validate_token(token)
         user_id = user["uid"]
 
-    print(query.session_id)
     youtube_service = YoutubeService(session_id=query.session_id, user_id=user_id, tag=query.tag)
 
     result = await youtube_service.get_youtube_summary(query.prompt)

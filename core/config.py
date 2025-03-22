@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     YOUTUBE_API_KEY: str
     UVICORN_PORT: str
     YOUTUBE_TRANSCRIPT_IO_API_TOKEN: str
+    GEMINI_API_KEY: str
 
     class Config:
         env_file = ".env"

@@ -44,7 +44,6 @@ class AuthService:
             
             # Get user profile information
             user = auth.get_user(auth_data["localId"])
-            # print(f"User: {user.UserRecord}")
             
             return {
                 "message": "Login successful",
@@ -80,7 +79,6 @@ class AuthService:
                 "display_name": user.display_name
             }
         except auth.EmailAlreadyExistsError:
-            print('email already exist')
             raise HTTPException(
                 status_code=400,
                 detail="Email already registered"

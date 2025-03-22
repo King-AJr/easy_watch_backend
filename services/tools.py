@@ -1,21 +1,11 @@
 import requests
-from youtube_transcript_api import YouTubeTranscriptApi
-import youtube_transcript_api
-from youtube_transcript_api.proxies import WebshareProxyConfig
 import os
 import re
+from pytubefix import YouTube
 from googleapiclient.discovery import build
-import tiktoken
 from dotenv import load_dotenv
 
 load_dotenv()
-
-ytt_api = YouTubeTranscriptApi(
-    proxy_config=WebshareProxyConfig(
-        proxy_username=os.environ.get('PROXY_USERNAME'),
-        proxy_password=os.environ.get('PROXY_PASSWORD'),
-    )
-)
 
 def youtube_search(query: str) -> list[dict]:
     """
@@ -38,12 +28,10 @@ def youtube_search(query: str) -> list[dict]:
             return None
 
         results = []
-        
-        # Process all videos in the response
+
         for video in response['items']:
             video_id = video['id']['videoId']
             
-            # Get additional video details
             video_request = youtube.videos().list(
                 part="snippet,statistics",
                 id=video_id
@@ -72,78 +60,35 @@ def get_transcript_from_url(youtube_url: str) -> any:
     """
     Fetch transcript for a youtube video using the youtube url and returns the transcript as a string
     """
+
     match = re.search(r"(?:v=|youtu\.be/)([\w-]+)", youtube_url)
 
     api_key= os.getenv("YOUTUBE_TRANSCRIPT_IO_API_TOKEN")
-    try:
-        if match:
-            video_id = match.group(1)
+    if match:
+        video_id = match.group(1)
             
-            headers = {
+        headers = {
             "Authorization": f"Basic {api_key}",
             "Content-Type": "application/json"
-            }
+        }
             
-            payload = {"ids": [video_id]}
+        payload = {"ids": [video_id]}
+
+        yt = YouTube(youtube_url)
             
-            response = requests.post("https://www.youtube-transcript.io/api/transcripts", headers=headers, json=payload)
+        response = requests.post("https://www.youtube-transcript.io/api/transcripts", headers=headers, json=payload)
 
-            data = response.json()
+        data = response.json()
 
-            transcript_segments = data[0]["tracks"][0]['transcript']
+        transcript_segments = data[0]["tracks"][0]['transcript']
 
-            transcript = " ".join(segment["text"] for segment in transcript_segments)
+        transcript = " ".join(segment["text"] for segment in transcript_segments)
             
-            return transcript
-
-        else:
-            raise ValueError("Invalid YouTube URL")
-    except youtube_transcript_api._errors.TranscriptsDisabled:
-        return "Could not retrieve transcript for this video"
-    except youtube_transcript_api._errors.VideoUnavailable:
-        return "Video is no longer available on youtube"
-
+        return {
+            "transcript": transcript,
+            "title": yt.title,
+            "description": yt.description,
+            "video_metadata": yt.metadata
+        }
     
 
-def count_tokens(text: str, model: str) -> int:
-    encoding = tiktoken.encoding_for_model(model)
-    return len(encoding.encode(text))
-    
-
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "youtube_search",
-            "description": """Search youtube for videos based on a query and returns a dictionary 
-                                with 10 video title and video url so the user can select which to transcribe""",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "The query to search for could be the title of the video or the description of the video"
-                    }
-                },
-                "required": ["query"]
-            }
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_transcript_from_url",
-            "description": "Fetch transcript for a youtube video using the youtube url and returns the transcript as a string",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "youtube_url": {
-                        "type": "string",
-                        "description": "The url of the youtube video"
-                    }
-                },
-                "required": ["youtube_url"]
-            }
-        },
-    }
-]
