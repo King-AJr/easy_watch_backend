@@ -161,7 +161,6 @@ class FirestoreService:
             collection_ids = [doc.id for doc in results]
             if collection_ids:
                 data["collection_id"] = collection_ids[0]
-                print(f" collection id {data["collection_id"]}")
             else:
                 data["collection_id"] = None
             sessions.append(data)
