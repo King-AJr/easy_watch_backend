@@ -10,3 +10,6 @@ class ChatRequest(BaseModel):
 class CollectionCreateRequest(BaseModel):
     name: str
     color: str
+
+class AddSessionToCollectionRequest(BaseModel):
+    session_id: str

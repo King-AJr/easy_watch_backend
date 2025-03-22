@@ -1,9 +1,11 @@
+from fastapi import HTTPException
 from langchain_google_firestore import FirestoreChatMessageHistory
 from dotenv import load_dotenv
 import os
 from typing import Dict, List, Optional
 from google.cloud import firestore
 from datetime import datetime
+from starlette.status import HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED
 
 load_dotenv()
 
@@ -53,6 +55,10 @@ class FirestoreService:
             "tag": self.tag,
             "updated_at": datetime.utcnow()
         }
+
+        if not getattr(self, "session_title", None):
+            self.session_title = message
+            session_data["title"] = self.session_title
 
         client.collection("sessions").document(self.session_id).set(session_data, merge=True)
 
@@ -129,7 +135,7 @@ class FirestoreService:
 
                 messages_list.append({
                     "role": "system",
-                    "content": chat_history.messages[i + 1].content,
+                    "content": chat_history.messages[i + 1].content.strip() or "You didn't retrieve a summary, use another chat.",
                     'timestamp': datetime.now()
                 })
 
@@ -150,6 +156,14 @@ class FirestoreService:
         for doc in docs:
             data = doc.to_dict()
             data["id"] = doc.id
+            query = client.collection("collections").where("sessions", "array_contains", data["id"])
+            results = query.stream()
+            collection_ids = [doc.id for doc in results]
+            if collection_ids:
+                data["collection_id"] = collection_ids[0]
+                print(f" collection id {data["collection_id"]}")
+            else:
+                data["collection_id"] = None
             sessions.append(data)
         return sessions
 
@@ -184,3 +198,16 @@ class FirestoreService:
             collections.append(data)
         return collections
     
+
+    async def add_session_to_collection(self, collection_id: str, session_id: str, user_id: str) -> Dict:
+        collection_ref = client.collection("collections").document(collection_id)
+        doc_snapshot = collection_ref.get()
+        if not doc_snapshot.exists:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="Collection not found")
+
+        data = doc_snapshot.to_dict()
+        if data.get("user_id") != user_id:
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Access denied")
+
+        collection_ref.update({"sessions": firestore.ArrayUnion([session_id])})
+        return {"message": "Session added to collection", "collection_id": collection_id, "session_id": session_id}

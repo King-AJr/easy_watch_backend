@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer
 from routes.auth import validate_token
-from models.chat import ChatRequest, CollectionCreateRequest
+from models.chat import AddSessionToCollectionRequest, ChatRequest, CollectionCreateRequest
 from services.firestore_service import FirestoreService
 from services.youtube_service import YoutubeService
 from starlette.status import HTTP_404_NOT_FOUND, HTTP_401_UNAUTHORIZED, HTTP_200_OK
@@ -87,3 +87,21 @@ async def get_user_collections(token: str = Depends(security)):
     firestore_service = FirestoreService()
     collections = await firestore_service.get_collections_for_user(user_id=user_id)
     return collections
+
+
+@router.post("/collections/{collection_id}/sessions", status_code=HTTP_200_OK)
+async def add_session_to_collection(
+    collection_id: str,
+    session_req: AddSessionToCollectionRequest,
+    token: str = Depends(security)
+):
+    
+    user = await validate_token(token)
+    user_id = user["uid"]
+
+    firestore_service = FirestoreService()
+
+    result = await firestore_service.add_session_to_collection(
+        collection_id, session_req.session_id, user_id
+    )
+    return result
